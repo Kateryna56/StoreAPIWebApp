@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Informatics-2023-Lab2 Store</title>
+    <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+    <h1>Informatics-2023-Lab2 Recipe</h1>
+    <h3>Add category</h3>
+    <form action="javascript:void(0);" method="POST" onsubmit="addCategory()">
+        <input type="text" id="add-name" placeholder="Category name">
+        <input type="submit" value="Add">
+    </form>
+    <div id="editCategory">
+        <h3>Edit</h3>
+        <form action="javascript:void(0);" onsubmit="updateCategory()">
+            <input type="hidden" id="edit-id">
+            <input type="text" id="edit-name">
+            <input type="submit" value="Save">
+            <a onclick="closeInput()" aria-label="Close">&#10006;</a>
+        </form>
+    </div>
+    <p id="counter"></p>
+    <table>
+        <tr>
+            <th>Name</th>
+        </tr>
+        <tbody id="categories"></tbody>
+    </table>
+    <script src="js/lab2.js" asp-append-version="true"></script>
+
+    <script type="text/javascript">
+        getCategories();
+    </script>
+</body>
+</html>

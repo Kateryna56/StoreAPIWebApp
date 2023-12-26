@@ -1,0 +1,147 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using StoreAPIWebApp.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace StoreAPIWebApp.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class CategoriesController : ControllerBase
+    {
+        private readonly StoreAPIContext _context;
+
+        public CategoriesController(StoreAPIContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/Categories
+        [HttpGet]
+        public async Task<ActionResult<PaginatedResult<Category>>> GetCategories([FromQuery] Parameters parameters)
+        {
+            var query = _context.Categories.AsQueryable();
+
+            // Проводимо пагінацію
+            var totalCount = await query.CountAsync();
+            var pageSize = parameters.PageSize;
+            var pageNumber = parameters.PageNumber;
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+            var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
+
+            // Створюємо посилання на наступну сторінку, якщо вона існує
+            string nextLink = null;
+            if (pageNumber < totalPages)
+            {
+                var nextPageNumber = pageNumber + 1;
+                nextLink = Url.Action("GetCategories", null, new { PageNumber = nextPageNumber, PageSize = pageSize }, Request.Scheme);
+            }
+
+            // Створюємо об'єкт результата
+            var result = new PaginatedResult<Category>
+            {
+                NextLink = nextLink,
+                Values = items,
+                TotalCount = totalCount,
+                PageSize = pageSize,
+                PageNumber = pageNumber,
+                TotalPages = totalPages
+            };
+
+            return Ok(result);
+        }
+
+        // GET: api/Categories/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Category>> GetCategory(int id)
+        {
+          if (_context.Categories == null)
+          {
+              return NotFound();
+          }
+            var category = await _context.Categories.FindAsync(id);
+
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            return category;
+        }
+
+        // PUT: api/Categories/5
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutCategory(int id, Category category)
+        {
+            if (id != category.Id)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(category).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!CategoryExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // POST: api/Categories
+        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [HttpPost]
+        public async Task<ActionResult<Category>> PostCategory(Category category)
+        {
+          if (_context.Categories == null)
+          {
+              return Problem("Entity set 'StoreAPIContext.Categories'  is null.");
+          }
+            _context.Categories.Add(category);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetCategory", new { id = category.Id }, category);
+        }
+
+        // DELETE: api/Categories/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCategory(int id)
+        {
+            if (_context.Categories == null)
+            {
+                return NotFound();
+            }
+            var category = await _context.Categories.FindAsync(id);
+            if (category == null)
+            {
+                return NotFound();
+            }
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool CategoryExists(int id)
+        {
+            return (_context.Categories?.Any(e => e.Id == id)).GetValueOrDefault();
+        }
+    }
+}
